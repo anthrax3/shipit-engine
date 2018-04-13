@@ -11,8 +11,6 @@ module Shipit
       primary_key: :organization,
       class_name: 'GithubHook::Organization'
 
-    after_commit :setup_hooks, if: :automatically_setup_hooks?
-
     class << self
       def find_or_create_by_handle(handle)
         organization, slug = handle.split('/').map(&:downcase)
@@ -38,18 +36,6 @@ module Shipit
 
     def add_member(member)
       members.append(member) unless members.include?(member)
-    end
-
-    attr_writer :automatically_setup_hooks
-    def automatically_setup_hooks?
-      @automatically_setup_hooks
-    end
-
-    def setup_hooks(async: true)
-      REQUIRED_HOOKS.each do |event|
-        hook = github_hooks.find_or_create_by!(event: event)
-        async ? hook.schedule_setup! : hook.setup!
-      end
     end
 
     def refresh_members!
